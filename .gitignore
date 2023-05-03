@@ -3,6 +3,5 @@
 
 # Except for these files and folders
 !main.py
-!chatbot-data/
 !requirements.txt
 !.gitignore
