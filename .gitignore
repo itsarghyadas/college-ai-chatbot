@@ -179,11 +179,12 @@ venv/
 
 # Ignore chroma files
 .chroma/
-.chatbot-data/
+
 # Ignore all files except main.py and requirements.txt
 *
 !main.py
 !requirements.txt
 !.gitignore
+!.chatbot-data/
 
 # End of https://www.toptal.com/developers/gitignore/api/python

@@ -29,5 +29,5 @@ query = st.text_input("Enter your query here")
 if query:
     result = qa({"query": query})
     st.success(result["result"])
-    st.json({"Source: ": (result["source_documents"][0].metadata["source"]),
+    st.json({"Source: ": os.path.basename(result["source_documents"][0].metadata["source"]),
              "Page Number: ": result["source_documents"][0].metadata["page"]})
