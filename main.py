@@ -13,18 +13,9 @@ load_dotenv()
 openai_api_key = os.getenv('OPENAI_API_KEY')
 chatbot_data_path = os.getenv('CHATBOT_DATA_DIR')
 chroma_dir = os.getenv('CHROMA_DIR')
-
-try:
-    loader = PyPDFDirectoryLoader(chatbot_data_path)
-    documents = loader.load()
-except Exception as e:
-    st.error(f"Error loading documents: {e}")
-    raise
-
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000, chunk_overlap=50)
-texts = text_splitter.split_documents(documents)
 persist_directory = chroma_dir
+
+
 embeddings = OpenAIEmbeddings()
 
 if os.path.exists(persist_directory):
@@ -40,16 +31,32 @@ if os.path.exists(persist_directory):
         raise
 else:
     try:
+        loader = PyPDFDirectoryLoader(chatbot_data_path)
+        print("Loading Documents")
+        documents = loader.load()
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000, chunk_overlap=50)
+        texts = text_splitter.split_documents(documents)
+        print("Splitting Documents")
+        st.info(
+            'Loading and preparing all the documents. This may take a few moments...', icon="ℹ")
+    except Exception as e:
+        raise ValueError(
+            "Error loading documents. Please check that the data path is correct and that the documents are in the correct format.")
+
+    try:
         print("Creating New Embeddings")
-        st.info('Creating New Embeddings', icon="ℹ️")
+        st.info('Creating new Embeddings!', icon="ℹ")
         docsearch = Chroma.from_documents(
             documents=texts, embedding=embeddings, persist_directory=persist_directory)
         docsearch.persist()
         qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(verbose=False, temperature=0.2), chain_type="stuff",
                                          retriever=docsearch.as_retriever(search_kwargs={"k": 2}), return_source_documents=True)
+        st.info('New embeddings created successfully!', icon="✅")
     except Exception as e:
-        st.error(f"Error creating new embeddings, please wait: {e}")
-        raise
+        raise ValueError(
+            "Error creating new embeddings. Please check that the embedding data and directory paths are correct.")
+
 
 st.title("Document Chatbot")
 st.write("This is a chatbot that can answer questions about a document.")
