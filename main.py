@@ -30,6 +30,7 @@ embeddings = OpenAIEmbeddings()
 if os.path.exists(persist_directory):
     try:
         print("Loading from Existing Embeddings")
+        st.info('Loading from Existing Embeddings', icon="ℹ")
         docsearch = Chroma(persist_directory=persist_directory,
                            embedding_function=embeddings)
         qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(verbose=False, temperature=0.2), chain_type="stuff",
@@ -40,6 +41,7 @@ if os.path.exists(persist_directory):
 else:
     try:
         print("Creating New Embeddings")
+        st.info('Creating New Embeddings', icon="ℹ️")
         docsearch = Chroma.from_documents(
             documents=texts, embedding=embeddings, persist_directory=persist_directory)
         docsearch.persist()
