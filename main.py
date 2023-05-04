@@ -5,7 +5,6 @@ from langchain.chains import RetrievalQA
 from langchain.vectorstores import Chroma
 from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.embeddings import OpenAIEmbeddings
-from langchain.embeddings import HuggingFaceEmbeddings
 import os
 from dotenv import load_dotenv
 
