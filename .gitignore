@@ -2,6 +2,7 @@
 .env
 venv
 db
+__pycache__
 # Except for these files and folders
 !main.py
 !requirements.txt

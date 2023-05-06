@@ -3,7 +3,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import RetrievalQA
 from langchain.vectorstores import Chroma
-from langchain.document_loaders import PyPDFDirectoryLoader
+from pdf_loader import CustomPyPDFDirectoryLoader
 from langchain.embeddings import OpenAIEmbeddings
 import os
 from dotenv import load_dotenv
@@ -31,7 +31,7 @@ if os.path.exists(persist_directory):
         raise
 else:
     try:
-        loader = PyPDFDirectoryLoader(chatbot_data_path)
+        loader = CustomPyPDFDirectoryLoader(chatbot_data_path)
         print("Loading Documents")
         documents = loader.load()
         text_splitter = RecursiveCharacterTextSplitter(
@@ -62,9 +62,13 @@ query = st.text_input("Enter your query here")
 if query:
     try:
         result = qa({"query": query})
-        st.success(result["result"])
+        st.success(result["result"])  # display only the result
+        st.write("Source Link:")
+        # display only the sourcelink
+        st.write(result["source_documents"][0].metadata["sourcelink"])
+        st.write("Source Internal Document:")
         st.json({"Source: ": os.path.basename(result["source_documents"][0].metadata["source"]),
-                 "Page Number: ": result["source_documents"][0].metadata["page"]})
+                 "Page Number: ": result["source_documents"][0].metadata["page"], })
     except Exception as e:
         st.error(f"Error getting answer: {e}")
         raise
