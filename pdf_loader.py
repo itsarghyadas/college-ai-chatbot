@@ -82,6 +82,8 @@ class PyPDFLoader(BasePDFLoader):
         with open(self.file_path, "rb") as pdf_file_obj:
             pdf_reader = pypdf.PdfReader(pdf_file_obj)
             sourcelink = pdf_reader.metadata.get("/Sourcelink")
+            if sourcelink is None:
+                sourcelink = "No reference found"
             return [
                 Document(
                     page_content=page.extract_text(),

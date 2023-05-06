@@ -3,11 +3,10 @@ from langchain.chat_models import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import RetrievalQA
 from langchain.vectorstores import Chroma
-from pdf_loader import CustomPyPDFDirectoryLoader
 from langchain.embeddings import OpenAIEmbeddings
 import os
+from pdf_loader import CustomPyPDFDirectoryLoader
 from dotenv import load_dotenv
-
 load_dotenv()
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
@@ -38,12 +37,15 @@ else:
             chunk_size=1000, chunk_overlap=50)
         texts = text_splitter.split_documents(documents)
         print("Splitting Documents")
+        st.info(
+            'Loading and preparing all the documents. This may take a few moments...', icon="ℹ")
     except Exception as e:
         raise ValueError(
             "Error loading documents. Please check that the data path is correct and that the documents are in the correct format.")
 
     try:
         print("Creating New Embeddings")
+        st.info('Creating new Embeddings!', icon="ℹ")
         docsearch = Chroma.from_documents(
             documents=texts, embedding=embeddings, persist_directory=persist_directory)
         docsearch.persist()
