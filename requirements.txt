@@ -5,3 +5,4 @@ python-dotenv==1.0.0
 streamlit==1.22.0
 pypdf==3.8.1
 tiktoken==0.3.3
+memory-profiler==0.61.0
