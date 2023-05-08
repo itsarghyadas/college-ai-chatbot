@@ -21,6 +21,7 @@ chroma_dir = os.getenv('CHROMA_DIR')
 persist_directory = chroma_dir
 user_data_dir = os.getenv('USER_DATA_DIR')
 user_db = os.getenv('USER_DB_NAME')
+ip_url = os.getenv('IP_URL')
 
 
 if not os.path.exists(user_data_dir):
@@ -76,7 +77,7 @@ def process_request(ip):
 
 @st.cache_data(experimental_allow_widgets=True)
 def get_client_ip():
-    return requests.get('https://api.ipify.org').text
+    return requests.get(ip_url).text
 
 
 @st.cache_data(experimental_allow_widgets=True)
