@@ -65,7 +65,7 @@ def process_request(ip):
             request_count += 1
             if request_count > REQUEST_THRESHOLD:
                 st.error(
-                    f'Error: Too many requests from this ip, please wait {TIME_LIMIT_SEC} seconds before trying again.')
+                    f'Error: Too many requests, please wait {TIME_LIMIT_SEC} seconds before trying again.')
                 return False
             last_request_time = max(last_request_time, current_time)
 
