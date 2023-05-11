@@ -91,7 +91,7 @@ if password_input == password:
             label='Download Questions',
             data=txtfile,
             file_name='questions.txt',
-            mime='text/plain'
+            mime='application/octet-stream'
         )
 
     c2.execute('DELETE FROM unknown_questions')
