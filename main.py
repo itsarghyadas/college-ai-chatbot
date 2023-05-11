@@ -82,7 +82,7 @@ if password_input == password:
         os.remove('questions.txt')
 
     # Create a new file and write the questions to it
-    with open('questions.txt', 'w') as txtfile:
+    with open('questions.txt', 'w', encoding='utf-8') as txtfile:
         for row in rows:
             txtfile.write(','.join(row) + '\n')  # Using comma as delimiter
 
@@ -91,12 +91,13 @@ if password_input == password:
             label='Download Questions',
             data=txtfile,
             file_name='questions.txt',
-            mime='application/octet-stream'
+            mime='text/plain;charset=utf-8'
         )
 
     c2.execute('DELETE FROM unknown_questions')
     conn2.commit()
     authenticated = True
+
 
 if not authenticated:
     if password_input != '':
