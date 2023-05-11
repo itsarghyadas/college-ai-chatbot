@@ -12,7 +12,6 @@ from langchain.prompts import PromptTemplate
 import requests
 import sqlite3
 import time
-import csv
 
 load_dotenv()
 
@@ -79,18 +78,20 @@ password_input = st.sidebar.text_input(
 
 if password_input == password:
     # Remove the existing file
-    if os.path.exists('questions.csv'):
-        os.remove('questions.csv')
+    if os.path.exists('questions.txt'):
+        os.remove('questions.txt')
+
     # Create a new file and write the questions to it
-    with open('questions.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerows(rows)
-    with open('questions.csv', 'rb') as csvfile:
+    with open('questions.txt', 'w') as txtfile:
+        for row in rows:
+            txtfile.write(','.join(row) + '\n')  # Using comma as delimiter
+
+    with open('questions.txt', 'rb') as txtfile:
         st.sidebar.download_button(
             label='Download Questions',
-            data=csvfile,
-            file_name='questions.csv',
-            mime='text/csv'
+            data=txtfile,
+            file_name='questions.txt',
+            mime='text/plain'
         )
 
     c2.execute('DELETE FROM unknown_questions')
