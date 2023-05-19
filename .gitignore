@@ -4,8 +4,6 @@ venv
 db
 __pycache__
 user-data
-questions.csv
-questions.txt
 # Except for these files and folders
 !main.py
 !requirements.txt
