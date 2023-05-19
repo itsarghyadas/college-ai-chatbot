@@ -12,6 +12,7 @@ from langchain.prompts import PromptTemplate
 import requests
 import sqlite3
 import time
+from openai.error import OpenAIError
 
 load_dotenv()
 
@@ -82,8 +83,13 @@ def get_client_ip():
 
 @st.cache_data(experimental_allow_widgets=True, show_spinner=False, ttl=3600)
 def my_func():
-    client_ip = get_client_ip()
-    prompt_template = """Use the following pieces of context to answer the question at the end. Try to sense the meaning of the question. The context is sometimes unstructured, so make an structured and rephrase version of the context in your mind, and try to find the answer of the question from that. if you sense multiple questions in one question, try to break it down and find the answer one by one then respond with the complete answer. If the answer is not available in the context, respond with "No context available." Do not hallucinate or use any external information. Make the answer meaningful and in sentence and human understandable but don't write too much, try to be short and concise. Also sound human and polite.
+    try:
+        client_ip = get_client_ip()
+    except requests.RequestException as e:
+        st.error(f"Error getting client IP: {e}")
+        return
+
+    prompt_template = """Use the following pieces of context to answer the question at the end. Try to sense the meaning of the question. The context is sometimes unstructured, so make a structured and rephrased version of the context in your mind, and try to find the answer of the question from that context. if you sense or find multiple questions in one question, try to break it down and find the answer one by one then respond with the complete answer. If the answer is not available in the context, respond with "No context available." Do not hallucinate or use any external information. Make the answer meaningful and in sentences and human understandable but don't write too much, try to be short and concise. Also sound human and polite.
 
     {context}
 
@@ -111,10 +117,13 @@ def my_func():
             chain_type_kwargs = {"prompt": PROMPT}
             qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(
             ), chain_type="stuff", retriever=docsearch.as_retriever(search_kwargs={"k": 2}), chain_type_kwargs=chain_type_kwargs, return_source_documents=True)
+        except OpenAIError as e:
+            st.error(f"OpenAI API Error: {e}")
+            return
         except Exception as e:
             st.error(
                 f"Error searching from existing Embeddings, please wait: {e}")
-            raise
+            return
     else:
         try:
             loader = CustomPyPDFDirectoryLoader(chatbot_data_path)
@@ -128,8 +137,9 @@ def my_func():
             time.sleep(1)
             info_placeholder.empty()
         except Exception as e:
-            raise ValueError(
+            st.error(
                 "Error loading documents. Please check that the data path is correct and that the documents are in the correct format.")
+            return
 
         try:
             info_placeholder = st.empty()
@@ -138,6 +148,10 @@ def my_func():
             info_placeholder.empty()
             docsearch = Chroma.from_documents(
                 documents=texts, embedding=embeddings, persist_directory=persist_directory)
+            info_placeholder.info(
+                'New embeddings created successfully!', icon="✅")
+            time.sleep(1)
+            info_placeholder.empty()
             docsearch.persist()
             if query:
                 results = docsearch.similarity_search_with_score(query)
@@ -149,13 +163,13 @@ def my_func():
             chain_type_kwargs = {"prompt": PROMPT}
             qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(
             ), chain_type="stuff", retriever=docsearch.as_retriever(search_kwargs={"k": 2}), chain_type_kwargs=chain_type_kwargs, return_source_documents=True)
-            info_placeholder.info(
-                'New embeddings created successfully!', icon="✅")
-            time.sleep(1)
-            info_placeholder.empty()
+        except OpenAIError as e:
+            st.error(f"OpenAI API Error: {e}")
+            return
         except Exception as e:
-            raise ValueError(
+            st.error(
                 "Error creating new embeddings. Please check that the embedding data and directory paths are correct.")
+            return
 
     if not query:
         st.error("❓ Please enter a query")
@@ -169,13 +183,19 @@ def my_func():
                 st.error("❌ No context available")
             else:
                 st.success(result["result"])
+        except OpenAIError as e:
+            st.error(f"OpenAI API Error: {e}")
+            return
         except Exception as e:
             st.error(f"Error getting answer: {e}")
-            raise
+            return
 
 
 if __name__ == "__main__":
-    my_func()
-    mem_usage = memory_usage()
-    total_mem_usage = round(sum(mem_usage), 2)
-    st.info(f"Total memory usage: {total_mem_usage} MB")
+    try:
+        my_func()
+        mem_usage = memory_usage()
+        total_mem_usage = round(sum(mem_usage), 2)
+        st.info(f"Total memory usage: {total_mem_usage} MB")
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
