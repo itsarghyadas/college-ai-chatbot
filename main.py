@@ -99,10 +99,6 @@ def my_func():
     embeddings = OpenAIEmbeddings()
     if os.path.exists(persist_directory):
         try:
-            info_placeholder = st.empty()
-            info_placeholder.info('Loading from Existing Embeddings', icon="ℹ")
-            time.sleep(1) 
-            info_placeholder.empty() 
             docsearch = Chroma(persist_directory=persist_directory,
                                embedding_function=embeddings)
             if query:
@@ -130,16 +126,16 @@ def my_func():
             info_placeholder.info(
                 'Loading and preparing all the documents. This may take a few moments...', icon="ℹ")
             time.sleep(1)
-            info_placeholder.empty() 
+            info_placeholder.empty()
         except Exception as e:
             raise ValueError(
                 "Error loading documents. Please check that the data path is correct and that the documents are in the correct format.")
 
         try:
-            info_placeholder = st.empty() 
+            info_placeholder = st.empty()
             info_placeholder.info('Creating new Embeddings!', icon="ℹ")
             time.sleep(1)
-            info_placeholder.empty() 
+            info_placeholder.empty()
             docsearch = Chroma.from_documents(
                 documents=texts, embedding=embeddings, persist_directory=persist_directory)
             docsearch.persist()
@@ -155,8 +151,8 @@ def my_func():
             ), chain_type="stuff", retriever=docsearch.as_retriever(search_kwargs={"k": 2}), chain_type_kwargs=chain_type_kwargs, return_source_documents=True)
             info_placeholder.info(
                 'New embeddings created successfully!', icon="✅")
-            time.sleep(1) 
-            info_placeholder.empty() 
+            time.sleep(1)
+            info_placeholder.empty()
         except Exception as e:
             raise ValueError(
                 "Error creating new embeddings. Please check that the embedding data and directory paths are correct.")
