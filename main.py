@@ -22,25 +22,15 @@ persist_directory = chroma_dir
 user_data_dir = os.getenv('USER_DATA_DIR')
 user_db = os.getenv('USER_DB_NAME')
 ip_url = os.getenv('IP_URL')
-password = os.getenv('PASSWORD')
-
-
-st.sidebar.image(
-    'https://www.chandernagorecollege.ac.in/images/logo.png', width=150)
-st.sidebar.title("Chandernagore College Bot")
-st.sidebar.write(
-    "This is a chatbot that can answer your questions related to this college!")
 
 
 if not os.path.exists(user_data_dir):
     os.makedirs(user_data_dir)
 
 db_path = os.path.join(user_data_dir, user_db)
-unknown_question_path = os.path.join(user_data_dir, 'unknown_questions.db')
 
-REQUEST_THRESHOLD = 3
-TIME_LIMIT_SEC = 10
-password = password
+REQUEST_THRESHOLD = 7
+TIME_LIMIT_SEC = 30
 
 conn = sqlite3.connect(db_path, check_same_thread=False)
 c = conn.cursor()
@@ -53,58 +43,6 @@ CREATE TABLE IF NOT EXISTS requests (
 '''
 c.execute(create_table_query)
 conn.commit()
-
-conn2 = sqlite3.connect(unknown_question_path, check_same_thread=False)
-c2 = conn2.cursor()
-
-create_table_query2 = '''
-CREATE TABLE IF NOT EXISTS unknown_questions (
-    query TEXT
-);
-'''
-c2.execute(create_table_query2)
-conn2.commit()
-
-# Get the list of unknown questions from the database
-c2.execute("SELECT * FROM unknown_questions")
-rows = c2.fetchall()
-
-
-authenticated = False
-
-# Prompt the user for the password
-password_input = st.sidebar.text_input(
-    'Enter the password to download the questions:', type='password')
-
-if password_input == password:
-    # Remove the existing file
-    if os.path.exists('questions.txt'):
-        os.remove('questions.txt')
-
-    # Create a new file and write the questions to it
-    with open('questions.txt', 'w', encoding='utf-8') as txtfile:
-        for row in rows:
-            txtfile.write(','.join(row) + '\n')  # Using comma as delimiter
-
-    with open('questions.txt', 'rb') as txtfile:
-        st.sidebar.download_button(
-            label='Download Questions',
-            data=txtfile,
-            file_name='questions.txt',
-            mime='text/plain;charset=utf-8'
-        )
-
-    c2.execute('DELETE FROM unknown_questions')
-    conn2.commit()
-    authenticated = True
-
-
-if not authenticated:
-    if password_input != '':
-        st.sidebar.error('Incorrect password, please try again')
-    else:
-        st.sidebar.warning(
-            'Please enter the password to download the "no-context" questions')
 
 
 def process_request(ip):
@@ -137,15 +75,15 @@ def process_request(ip):
     return True
 
 
-@st.cache_data(experimental_allow_widgets=True, show_spinner=False)
+@st.cache_data(experimental_allow_widgets=True, show_spinner=False, ttl=3600)
 def get_client_ip():
     return requests.get(ip_url).text
 
 
-@st.cache_data(experimental_allow_widgets=True, show_spinner=False)
+@st.cache_data(experimental_allow_widgets=True, show_spinner=False, ttl=3600)
 def my_func():
     client_ip = get_client_ip()
-    prompt_template = """Use the following pieces of context to answer the question at the end. Try to sense the meaning of the question. If the answer is not available in the context, respond with "No context available." Do not hallucinate or use any external information. Make the answer meaningful and in sentence and human understandable but don't write to much try to be short and concise.
+    prompt_template = """Use the following pieces of context to answer the question at the end. Try to sense the meaning of the question. The context is sometimes unstructured, so make an structured and rephrase version of the context in your mind, and try to find the answer of the question from that. If the answer is not available in the context, respond with "No context available." Do not hallucinate or use any external information. Make the answer meaningful and in sentence and human understandable but don't write to much try to be short and concise. Also sound human and polite.
 
     {context}
 
@@ -156,11 +94,15 @@ def my_func():
                             input_variables=["context", "question"])
 
     st.title("Ask your question 🤖:")
-    query = st.text_input(label="Query", label_visibility="hidden")
+    st.write("This can answer your questions related to Chandernagore College, Please be specific with your questions.")
+    query = st.text_input("Enter your query here")
     embeddings = OpenAIEmbeddings()
     if os.path.exists(persist_directory):
         try:
-            st.sidebar.info('Loading from Existing Embeddings', icon="✔")
+            info_placeholder = st.empty()
+            info_placeholder.info('Loading from Existing Embeddings', icon="ℹ")
+            time.sleep(1) 
+            info_placeholder.empty() 
             docsearch = Chroma(persist_directory=persist_directory,
                                embedding_function=embeddings)
             if query:
@@ -168,7 +110,7 @@ def my_func():
                 for result in results:
                     if result[1] > 0.5:
                         st.error(
-                            "No relevant documents found, please try again with a college related query")
+                            "❌ No relevant documents found, please try again with a college related query")
                         return
             chain_type_kwargs = {"prompt": PROMPT}
             qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(
@@ -184,14 +126,20 @@ def my_func():
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1000, chunk_overlap=50)
             texts = text_splitter.split_documents(documents)
-            st.sidebar.info(
+            info_placeholder = st.empty()
+            info_placeholder.info(
                 'Loading and preparing all the documents. This may take a few moments...', icon="ℹ")
+            time.sleep(1)
+            info_placeholder.empty() 
         except Exception as e:
             raise ValueError(
                 "Error loading documents. Please check that the data path is correct and that the documents are in the correct format.")
 
         try:
-            st.sidebar.info('Creating new Embeddings!', icon="ℹ")
+            info_placeholder = st.empty() 
+            info_placeholder.info('Creating new Embeddings!', icon="ℹ")
+            time.sleep(1)
+            info_placeholder.empty() 
             docsearch = Chroma.from_documents(
                 documents=texts, embedding=embeddings, persist_directory=persist_directory)
             docsearch.persist()
@@ -200,18 +148,21 @@ def my_func():
                 for result in results:
                     if result[1] > 0.5:
                         st.error(
-                            "No relevant documents found, please try again with a college related query")
+                            "❌ No relevant documents found, please try again with a college related query")
                         return
             chain_type_kwargs = {"prompt": PROMPT}
             qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(
             ), chain_type="stuff", retriever=docsearch.as_retriever(search_kwargs={"k": 2}), chain_type_kwargs=chain_type_kwargs, return_source_documents=True)
-            st.sidebar.info('New embeddings created successfully!', icon="✅")
+            info_placeholder.info(
+                'New embeddings created successfully!', icon="✅")
+            time.sleep(1) 
+            info_placeholder.empty() 
         except Exception as e:
             raise ValueError(
                 "Error creating new embeddings. Please check that the embedding data and directory paths are correct.")
 
     if not query:
-        st.error("Please enter a query", icon="❓")
+        st.error("❓ Please enter a query")
         return
     if query:
         if not process_request(client_ip):
@@ -219,28 +170,16 @@ def my_func():
         try:
             result = qa({"query": query})
             if result["result"] == "No context available.":
-                print("Trying to store the query in the database.")
-                c2.execute(
-                    "INSERT INTO unknown_questions (query) VALUES (?)", (query,))
-                conn2.commit()
-                st.error("No context available.")
+                st.error("❌ No context available")
             else:
                 st.success(result["result"])
-                st.write("Source Link: 👇")
-                st.write(result["source_documents"]
-                         [0].metadata["sourcelink"])
-                st.write("Source Internal Document: 🔍")
-                st.json({"Source: ": os.path.basename(result["source_documents"][0].metadata["source"]),
-                         "Page Number: ": result["source_documents"][0].metadata["page"], })
         except Exception as e:
             st.error(f"Error getting answer: {e}")
             raise
-        conn2.close()
 
 
 if __name__ == "__main__":
     my_func()
-    # calculate the total memory usage
     mem_usage = memory_usage()
     total_mem_usage = round(sum(mem_usage), 2)
-    st.sidebar.info(f"Total memory usage: {total_mem_usage} MB", icon="📝")
+    st.info(f"Total memory usage: {total_mem_usage} MB")
