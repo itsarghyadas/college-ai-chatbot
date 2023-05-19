@@ -83,7 +83,7 @@ def get_client_ip():
 @st.cache_data(experimental_allow_widgets=True, show_spinner=False, ttl=3600)
 def my_func():
     client_ip = get_client_ip()
-    prompt_template = """Use the following pieces of context to answer the question at the end. Try to sense the meaning of the question. The context is sometimes unstructured, so make an structured and rephrase version of the context in your mind, and try to find the answer of the question from that. If the answer is not available in the context, respond with "No context available." Do not hallucinate or use any external information. Make the answer meaningful and in sentence and human understandable but don't write to much try to be short and concise. Also sound human and polite.
+    prompt_template = """Use the following pieces of context to answer the question at the end. Try to sense the meaning of the question. The context is sometimes unstructured, so make an structured and rephrase version of the context in your mind, and try to find the answer of the question from that. if you sense multiple questions in one question, try to break it down and find the answer one by one then respond with the complete answer. If the answer is not available in the context, respond with "No context available." Do not hallucinate or use any external information. Make the answer meaningful and in sentence and human understandable but don't write too much, try to be short and concise. Also sound human and polite.
 
     {context}
 
